@@ -1,5 +1,6 @@
 # libraries we'll need
 library(nnet)
+library(ggplot2)
 
 # read in data
 POSdata <- read.csv("results.csv", header = T)
@@ -75,8 +76,34 @@ followingPOSs <- orderedSubset(POSdata, "file", "followingPOS")
 
 #### visualization ####
 
+# first remove all POS
 
+# POS & following POS by freq, if a pair occurs more than 5 times
+followingWordsFreq <- orderedSubset(POSdata, "targetPOS", "followingPOS")
+followingWordsFreq <- followingWordsFreq[followingWordsFreq$Freq > 10,]
 
+femaleBiasList <- NULL
+maleBiasList <- NULL
+for(i in 1:dim(followingWordsFreq)[1]){
+  subset <- POSdata[POSdata$targetPOS == followingWordsFreq$Var1[i] &
+    POSdata$followingPOS == followingWordsFreq$Var2[i],]
+  femaleBias <- summary(subset$file)["female"]/sum(summary(POSdata$file))
+  maleBias <- summary(subset$file)["male"]/sum(summary(POSdata$file))
+  femaleBiasList <- c(femaleBiasList, femaleBias)
+  maleBiasList <- c(maleBiasList, maleBias)
+}
+
+followingWordsFreq$femaleBias <- femaleBiasList
+
+ggplot(followingWordsFreq, aes(Var2, Var1)) + 
+  geom_tile(aes(fill = biasList), color = "white") +
+  scale_fill_gradient(low = "white", high = "steelblue") +
+  theme(legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(size=16),
+        axis.title=element_text(size=14,face="bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Expression level")
 
 #### statistical modeling ####
 
