@@ -29,14 +29,6 @@ head(tags)
 
 #### data exploration ####
 
-# differences of Part of Speech
-POSbyGender <- table(POSdata$file, POSdata$targetPOS)
-chisq.test(POSbyGender)
-
-# differences in following POS
-followingPOSbyGender <- table(POSdata$file, POSdata$followingPOS)
-chisq.test(followingPOSbyGender)
-
 # summary tables
 table(POSdata$file, POSdata$targetPOS)
 table(POSdata$file, POSdata$followingPOS)
@@ -78,26 +70,29 @@ followingPOSs <- orderedSubset(POSdata, "file", "followingPOS")
 
 # first remove all POS
 
-# POS & following POS by freq, if a pair occurs more than 5 times
+# POS & following POS by freq
 followingWordsFreq <- orderedSubset(POSdata, "targetPOS", "followingPOS")
-followingWordsFreq <- followingWordsFreq[followingWordsFreq$Freq > 10,]
+# uncomment next line to remove sparse rows
+# followingWordsFreq <- followingWordsFreq[followingWordsFreq$Freq > 10,]
 
 femaleBiasList <- NULL
 maleBiasList <- NULL
 for(i in 1:dim(followingWordsFreq)[1]){
   subset <- POSdata[POSdata$targetPOS == followingWordsFreq$Var1[i] &
     POSdata$followingPOS == followingWordsFreq$Var2[i],]
-  femaleBias <- summary(subset$file)["female"]/sum(summary(POSdata$file))
-  maleBias <- summary(subset$file)["male"]/sum(summary(POSdata$file))
+  femaleBias <- summary(subset$file)["female"]/sum(summary(subset$file))
+  maleBias <- summary(subset$file)["male"]/sum(summary(subset$file))
   femaleBiasList <- c(femaleBiasList, femaleBias)
   maleBiasList <- c(maleBiasList, maleBias)
 }
 
 followingWordsFreq$femaleBias <- femaleBiasList
+followingWordsFreq$maleBias <- maleBiasList
 
+# plot of female-biased squares
 ggplot(followingWordsFreq, aes(Var2, Var1)) + 
-  geom_tile(aes(fill = biasList), color = "white") +
-  scale_fill_gradient(low = "white", high = "steelblue") +
+  geom_tile(aes(fill = femaleBias)) +
+  scale_fill_gradient(low = "cyan", high = "purple4") +
   theme(legend.title = element_text(size = 10),
         legend.text = element_text(size = 12),
         plot.title = element_text(size=16),
@@ -105,7 +100,18 @@ ggplot(followingWordsFreq, aes(Var2, Var1)) +
         axis.text.x = element_text(angle = 90, hjust = 1)) +
   labs(fill = "Expression level")
 
+
 #### statistical modeling ####
+
+# chi square tests
+
+# differences of Part of Speech
+POSbyGender <- table(POSdata$file, POSdata$targetPOS)
+chisq.test(POSbyGender)
+
+# differences in following POS
+followingPOSbyGender <- table(POSdata$file, POSdata$followingPOS)
+chisq.test(followingPOSbyGender)
 
 # some logistic regressioning
 # logistic model of factors. 
