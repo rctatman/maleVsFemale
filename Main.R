@@ -1,4 +1,5 @@
-# file for locally testing scripts
+# libraries we'll need
+library(nnet)
 
 # read in data
 POSdata <- read.csv("results.csv", header = T)
@@ -25,6 +26,8 @@ head(tags)
 # # attach datafile for easier reference
 # attach(POSdata)
 
+#### data exploration ####
+
 # differences of Part of Speech
 POSbyGender <- table(POSdata$file, POSdata$targetPOS)
 chisq.test(POSbyGender)
@@ -36,11 +39,56 @@ chisq.test(followingPOSbyGender)
 # summary tables
 table(POSdata$file, POSdata$targetPOS)
 table(POSdata$file, POSdata$followingPOS)
+table(POSdata$targetPOS, POSdata$followingPOS)
 
-# vizualize differenves
+# frequency of target POS, following POS & following word by file
+targetPOSFreq <- orderedSubset(POSdata, "file", "targetPOS")
+followingWordsFreq <- orderedSubset(POSdata, "file", "followingWord")
+followingPOSsFreq <- orderedSubset(POSdata, "file", "followingPOS")
+
+# data with only nouns (bare, plural or proper) as target POS
+POSdata[grepl( ".NN*" , POSdata$targetPOS ), ]
+
+# what is the following word if the target POS is an adjective?
+with(data = POSdata[grepl( "JJ" , POSdata$targetPOS ),],
+                    table(droplevels(followingWord), file))
+
+# what's up with all those proper nouns?
+wordFollowingProperNouns <- droplevels(POSdata[POSdata$targetPOS == "NNP", ])
+orderedSubset(wordFollowingProperNouns, "file", "followingWord")
+
+# what are the words after "female" that are tagged as noun noun compounds?
+table(droplevels(POSdata[POSdata$file == "female" & 
+                           POSdata$targetPOS == "NN" &
+                           POSdata$followingPOS == "NN", 
+                         "followingWord"]))
+# following "male"
+table(droplevels(POSdata[POSdata$file == "male" & 
+                           POSdata$targetPOS == "NN" &
+                           POSdata$followingPOS == "NN", 
+                         "followingWord"]))
+
+
+# most common following words & following POS
+followingWords <- orderedSubset(POSdata, "file", "followingWord")
+followingPOSs <- orderedSubset(POSdata, "file", "followingPOS")
+
+#### visualization ####
 
 
 
+
+#### statistical modeling ####
+
+# some logistic regressioning
+# logistic model of factors. 
+model <- multinom(targetPOS ~ file, data = POSdata[,1:3])
+summary(model)
+
+model <- multinom(targetPOS ~ followingPOS, data = POSdata[,1:3])
+summary(model)
+
+#### Functions ####
 # function to get a list of factor1 by factor2, sorted by frequency, w/ default
 # option to return the top 10
 orderedSubset <- function(data, factor1, factor2 = NULL, topTen = T){
@@ -58,39 +106,3 @@ orderedSubset <- function(data, factor1, factor2 = NULL, topTen = T){
   # return ordered subset 
   return(newTable)
 }
-
-# frequency of target POS & following words & their
-targetPOSFreq <- orderedSubset(POSdata, "file", "targetPOS")
-followingWordsFreq <- orderedSubset(POSdata, "file", "followingWord")
-followingPOSsFreq <- orderedSubset(POSdata, "file", "followingPOS")
-
-
-POSdata[grepl( ".NN*" , POSdata$targetPOS ), ]
-with(data = POSdata[grepl( "JJ" , POSdata$targetPOS ),],
-                    table(droplevels(followingWord), file))
-
-# what's up with all those proper nouns?
-wordFollowingProperNouns <- droplevels(POSdata[POSdata$targetPOS == "NNP", ])
-orderedSubset(wordFollowingProperNouns, "file", "followingWord")
-
-
-table(droplevels(POSdata[POSdata$file == "female" & 
-                           POSdata$targetPOS == "NNP" &
-                           POSdata$followingPOS == "NN", 
-                         "followingWord"]))
-
-orderedSubset(POSdata, "followingPOS", "targetPOS")
-followingWords <- orderedSubset(POSdata, "file", "followingWord")
-followingPOSs <- orderedSubset(POSdata, "file", "followingPOS")
-
-# some logistic regressioning
-library(nnet)
-
-lm(targetPOS ~ data = head(POSdata[,1:3]))
-
-# logistic model of factors. 
-model <- multinom(targetPOS ~ file, data = POSdata[,1:3])
-summary(model)
-
-model <- multinom(targetPOS ~ followingPOS, data = POSdata[,1:3])
-summary(model)
