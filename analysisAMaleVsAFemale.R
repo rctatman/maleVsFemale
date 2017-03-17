@@ -73,7 +73,7 @@ followingPOSs <- orderedSubset(POSdata, "file", "followingPOS")
 # POS & following POS by freq
 followingWordsFreq <- orderedSubset(POSdata, "targetPOS", "followingPOS")
 # uncomment next line to remove sparse rows
-# followingWordsFreq <- followingWordsFreq[followingWordsFreq$Freq > 10,]
+ followingWordsFreq <- followingWordsFreq[followingWordsFreq$Freq > 10,]
 
 femaleBiasList <- NULL
 maleBiasList <- NULL
@@ -91,16 +91,30 @@ followingWordsFreq$maleBias <- maleBiasList
 
 # plot of female-biased squares
 ggplot(followingWordsFreq, aes(Var2, Var1)) + 
-  geom_tile(aes(fill = femaleBias)) +
-  scale_fill_gradient(low = "cyan", high = "purple4") +
+  # width = Freq box width equiv. to freq
+  geom_tile(aes(fill = femaleBias)) + 
+  scale_fill_gradient(low = "cyan", high = "darkred") +
   theme(legend.title = element_text(size = 10),
         legend.text = element_text(size = 12),
         plot.title = element_text(size=16),
         axis.title=element_text(size=14,face="bold"),
         axis.text.x = element_text(angle = 90, hjust = 1)) +
-  labs(fill = "Expression level")
+  xlab("Following POS") + ylab("Target POS") +
+  labs(fill = "Proportion 'female'")
 
+# plot of frequency of occurance
+ggplot(followingWordsFreq, aes(Var2, Var1, fill = Freq)) + 
+  geom_tile(aes(fill = Freq)) +
+  scale_fill_gradient(low = "white", high = "steelblue") +
+  theme(legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(size=16),
+        axis.title=element_text(size=14,face="bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  xlab("Following POS") + ylab("Target POS") +
+  labs(fill = "")
 
+  
 #### statistical modeling ####
 
 # chi square tests
